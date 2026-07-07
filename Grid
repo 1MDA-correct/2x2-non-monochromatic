@@ -1,0 +1,138 @@
+/*
+ * Prospecting Studio
+ * Grid.pde
+ *
+ * Stores all board data.
+ * This class does NOT enforce rules.
+ * It is only responsible for managing the board state.
+ */
+
+class Grid {
+
+  static final byte BLACK = 0;
+  static final byte WHITE = (byte)255;
+
+  static final byte AUTO  = 0;
+  static final byte USER  = 1;
+  static final byte LOCKED = 2;
+
+  final int width;
+  final int height;
+
+  private byte[][] cells;
+  private byte[][] owner;
+  private int[][] timestamps;
+
+  Grid(int width, int height) {
+
+    this.width = width;
+    this.height = height;
+
+    cells = new byte[height][width];
+    owner = new byte[height][width];
+    timestamps = new int[height][width];
+
+    clear(WHITE);
+  }
+
+  //-------------------------------------------------
+  // Basic information
+  //-------------------------------------------------
+
+  boolean contains(int x, int y) {
+    return x >= 0 &&
+           y >= 0 &&
+           x < width &&
+           y < height;
+  }
+
+  //-------------------------------------------------
+  // Cell access
+  //-------------------------------------------------
+
+  byte getColor(int x, int y) {
+    return cells[y][x];
+  }
+
+  void setColor(int x, int y, byte color) {
+    cells[y][x] = color;
+  }
+
+  //-------------------------------------------------
+  // Ownership
+  //-------------------------------------------------
+
+  byte getOwner(int x, int y) {
+    return owner[y][x];
+  }
+
+  void setOwner(int x, int y, byte value) {
+    owner[y][x] = value;
+  }
+
+  //-------------------------------------------------
+  // Timestamp
+  //-------------------------------------------------
+
+  int getTimestamp(int x, int y) {
+    return timestamps[y][x];
+  }
+
+  void setTimestamp(int x, int y, int value) {
+    timestamps[y][x] = value;
+  }
+
+  //-------------------------------------------------
+  // Utility
+  //-------------------------------------------------
+
+  void clear(byte color) {
+
+    for (int y=0; y<height; y++) {
+
+      for (int x=0; x<width; x++) {
+
+        cells[y][x]=color;
+
+        owner[y][x]=AUTO;
+
+        timestamps[y][x]=0;
+      }
+    }
+  }
+
+  void fillRandom(float whiteProbability) {
+
+    for (int y=0; y<height; y++) {
+
+      for (int x=0; x<width; x++) {
+
+        cells[y][x] =
+          random(1) < whiteProbability ?
+          WHITE :
+          BLACK;
+
+        owner[y][x]=AUTO;
+
+        timestamps[y][x]=0;
+      }
+    }
+  }
+
+  Grid copy() {
+
+    Grid g = new Grid(width,height);
+
+    for(int y=0;y<height;y++){
+
+      arrayCopy(cells[y],g.cells[y]);
+
+      arrayCopy(owner[y],g.owner[y]);
+
+      arrayCopy(timestamps[y],g.timestamps[y]);
+    }
+
+    return g;
+  }
+
+}
