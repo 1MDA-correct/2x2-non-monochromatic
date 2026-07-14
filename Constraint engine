@@ -1,0 +1,229 @@
+/*
+
+Prospecting Studio
+
+ConstraintEngine.pde
+
+Queue-based constraint propagation engine.
+
+*/
+
+class ConstraintEngine {
+
+Grid grid;
+
+int currentTimestamp = 1;
+
+ArrayList<PVector> queue = new ArrayList<PVector>();
+
+ConstraintEngine(Grid grid) {
+
+this.grid = grid;
+
+}
+
+void setPixel(int x, int y, byte color) {
+
+if (!grid.contains(x, y)) return;
+
+grid.setColor(x, y, color);
+
+grid.setOwner(x, y, Grid.USER);
+
+grid.setTimestamp(x, y, currentTimestamp++);
+
+propagateFrom(x, y);
+
+}
+
+void setPixelAuto(int x, int y, byte color) {
+
+if (!grid.contains(x, y)) return;
+
+grid.setColor(x, y, color);
+
+grid.setOwner(x, y, Grid.AUTO);
+
+grid.setTimestamp(x, y, 0);
+
+propagateFrom(x, y);
+
+}
+
+void erasePixel(int x, int y, float whiteProbability) {
+
+if (!grid.contains(x, y)) return;
+
+byte value = generatedValue(x, y, whiteProbability);
+
+grid.setColor(x, y, value);
+
+grid.setOwner(x, y, Grid.AUTO);
+
+grid.setTimestamp(x, y, 0);
+
+propagateFrom(x, y);
+
+}
+
+void generate(float whiteProbability) {
+
+for (int y = 0; y < grid.height; y++) {
+
+for (int x = 0; x < grid.width; x++) {
+
+byte value = generatedValue(x, y, whiteProbability);
+
+grid.setColor(x, y, value);
+
+grid.setOwner(x, y, Grid.AUTO);
+
+grid.setTimestamp(x, y, 0);
+
+}
+
+}
+
+}
+
+boolean validateBoard() {
+
+for (int y = 0; y < grid.height - 1; y++) {
+
+for (int x = 0; x < grid.width - 1; x++) {
+
+byte a = grid.getColor(x, y);
+
+byte b = grid.getColor(x + 1, y);
+
+byte c = grid.getColor(x, y + 1);
+
+byte d = grid.getColor(x + 1, y + 1);
+
+if (a == b && b == c && c == d) return false;
+
+}
+
+}
+
+return true;
+
+}
+
+void propagateFrom(int x, int y) {
+
+queue.clear();
+
+queue.add(new PVector(x, y));
+
+while (!queue.isEmpty()) {
+
+PVector p = queue.remove(queue.size() - 1);
+
+int px = int(p.x);
+
+int py = int(p.y);
+
+for (int oy = -1; oy <= 0; oy++) {
+
+for (int ox = -1; ox <= 0; ox++) {
+
+int sx = px + ox;
+
+int sy = py + oy;
+
+if (sx < 0 || sy < 0 || sx >= grid.width - 1 || sy >= grid.height - 1) continue;
+
+resolveSquare(sx, sy);
+
+}
+
+}
+
+}
+
+}
+
+void resolveSquare(int x, int y) {
+
+byte a = grid.getColor(x, y);
+
+byte b = grid.getColor(x + 1, y);
+
+byte c = grid.getColor(x, y + 1);
+
+byte d = grid.getColor(x + 1, y + 1);
+
+if (!(a == b && b == c && c == d)) return;
+
+byte newColor = (a == Grid.BLACK) ? Grid.WHITE : Grid.BLACK;
+
+PVector target = chooseTarget(x, y);
+
+int tx = int(target.x);
+
+int ty = int(target.y);
+
+grid.setColor(tx, ty, newColor);
+
+grid.setOwner(tx, ty, Grid.AUTO);
+
+queue.add(new PVector(tx, ty));
+
+}
+
+PVector chooseTarget(int x, int y) {
+
+if (grid.getOwner(x, y) == Grid.AUTO) return new PVector(x, y);
+
+if (grid.getOwner(x + 1, y) == Grid.AUTO) return new PVector(x + 1, y);
+
+if (grid.getOwner(x, y + 1) == Grid.AUTO) return new PVector(x, y + 1);
+
+if (grid.getOwner(x + 1, y + 1) == Grid.AUTO) return new PVector(x + 1, y + 1);
+
+int t1 = grid.getTimestamp(x, y);
+
+int t2 = grid.getTimestamp(x + 1, y);
+
+int t3 = grid.getTimestamp(x, y + 1);
+
+int t4 = grid.getTimestamp(x + 1, y + 1);
+
+int newest = max(max(t1, t2), max(t3, t4));
+
+if (t2 == newest) return new PVector(x + 1, y);
+
+if (t3 == newest) return new PVector(x, y + 1);
+
+if (t4 == newest) return new PVector(x + 1, y + 1);
+
+return new PVector(x, y);
+
+}
+
+byte generatedValue(int x, int y, float whiteProbability) {
+
+if (x == 0 || y == 0) {
+
+return random(1) < whiteProbability ? Grid.WHITE : Grid.BLACK;
+
+}
+
+byte tl = grid.getColor(x - 1, y - 1);
+
+byte tr = grid.getColor(x, y - 1);
+
+byte bl = grid.getColor(x - 1, y);
+
+if (tl == tr && tr == bl) {
+
+return (tl == Grid.WHITE) ? Grid.BLACK : Grid.WHITE;
+
+}
+
+return random(1) < whiteProbability ? Grid.WHITE : Grid.BLACK;
+
+}
+
+}
