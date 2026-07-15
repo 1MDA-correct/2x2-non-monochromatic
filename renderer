@@ -1,0 +1,83 @@
+class Renderer {
+
+Grid grid;
+
+int cellSize;
+
+Renderer(Grid grid, int cellSize) {
+
+this.grid = grid;
+
+this.cellSize = cellSize;
+
+}
+
+void drawGrid() {
+
+noStroke();
+
+for (int y = 0; y < grid.height; y++) {
+
+for (int x = 0; x < grid.width; x++) {
+
+fill(grid.getColor(x, y) & 0xFF);
+
+rect(x * cellSize, y * cellSize, cellSize, cellSize);
+
+}
+
+}
+
+}
+
+void drawCursor(int gx, int gy, byte color) {
+
+if (!grid.contains(gx, gy)) return;
+
+noFill();
+
+stroke(color == Grid.BLACK ? 255 : 0);
+
+strokeWeight(2);
+
+rect(gx * cellSize, gy * cellSize, cellSize, cellSize);
+
+}
+
+int screenToGridX(float sx) {
+
+return floor(sx / cellSize);
+
+}
+
+int screenToGridY(float sy) {
+
+return floor(sy / cellSize);
+
+}
+
+float gridToScreenX(int gx) {
+
+return gx * cellSize;
+
+}
+
+float gridToScreenY(int gy) {
+
+return gy * cellSize;
+
+}
+
+void setCellSize(int size) {
+
+cellSize = max(1, size);
+
+}
+
+int getCellSize() {
+
+return cellSize;
+
+}
+
+}
