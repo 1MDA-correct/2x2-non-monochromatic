@@ -1,0 +1,147 @@
+class Renderer {
+
+Grid grid;
+
+Camera camera;
+
+Renderer(Grid grid, Camera camera) {
+
+this.grid = grid;
+
+this.camera = camera;
+
+}
+
+void drawGrid() {
+
+noStroke();
+
+float cs = camera.getCellSize();
+
+int startX = max(0, camera.screenToGridX(0));
+
+int startY = max(0, camera.screenToGridY(0));
+
+int endX = min(grid.width - 1, camera.screenToGridX(width) + 1);
+
+int endY = min(grid.height - 1, camera.screenToGridY(height) + 1);
+
+for (int y = startY; y <= endY; y++) {
+
+for (int x = startX; x <= endX; x++) {
+
+fill(grid.getColor(x, y) & 0xFF);
+
+float sx = camera.gridToScreenX(x);
+
+float sy = camera.gridToScreenY(y);
+
+rect(sx, sy, cs, cs);
+
+}
+
+}
+
+}
+
+void drawCursor(int gx, int gy, byte color) {
+
+if (!grid.contains(gx, gy)) return;
+
+float cs = camera.getCellSize();
+
+noFill();
+
+stroke(color == Grid.BLACK ? 255 : 0);
+
+strokeWeight(max(1, 2.0 / camera.getZoom()));
+
+rect(
+
+camera.gridToScreenX(gx),
+
+camera.gridToScreenY(gy),
+
+cs,
+
+cs
+
+);
+
+}
+
+void drawGridLines() {
+
+if (camera.getCellSize() < 8) return;
+
+stroke(180);
+
+strokeWeight(1);
+
+int startX = max(0, camera.screenToGridX(0));
+
+int startY = max(0, camera.screenToGridY(0));
+
+int endX = min(grid.width, camera.screenToGridX(width) + 1);
+
+int endY = min(grid.height, camera.screenToGridY(height) + 1);
+
+for (int x = startX; x <= endX; x++) {
+
+float sx = camera.gridToScreenX(x);
+
+line(sx, camera.gridToScreenY(startY), sx, camera.gridToScreenY(endY));
+
+}
+
+for (int y = startY; y <= endY; y++) {
+
+float sy = camera.gridToScreenY(y);
+
+line(camera.gridToScreenX(startX), sy, camera.gridToScreenX(endX), sy);
+
+}
+
+}
+
+void drawOverlay(String textLine) {
+
+fill(0, 180);
+
+noStroke();
+
+rect(8, 8, 520, 30, 8);
+
+fill(255);
+
+textAlign(LEFT, TOP);
+
+text(textLine, 16, 14);
+
+}
+
+int screenToGridX(float sx) {
+
+return camera.screenToGridX(sx);
+
+}
+
+int screenToGridY(float sy) {
+
+return camera.screenToGridY(sy);
+
+}
+
+float gridToScreenX(int gx) {
+
+return camera.gridToScreenX(gx);
+
+}
+
+float gridToScreenY(int gy) {
+
+return camera.gridToScreenY(gy);
+
+}
+
+}
