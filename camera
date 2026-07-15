@@ -1,0 +1,125 @@
+class Camera {
+
+float offsetX;
+
+float offsetY;
+
+float zoom;
+
+int baseCellSize;
+
+Camera(int baseCellSize) {
+
+this.baseCellSize = baseCellSize;
+
+zoom = 1.0;
+
+offsetX = 0;
+
+offsetY = 0;
+
+}
+
+float getCellSize() {
+
+return baseCellSize * zoom;
+
+}
+
+float gridToScreenX(int gx) {
+
+return gx * getCellSize() + offsetX;
+
+}
+
+float gridToScreenY(int gy) {
+
+return gy * getCellSize() + offsetY;
+
+}
+
+int screenToGridX(float sx) {
+
+return floor((sx - offsetX) / getCellSize());
+
+}
+
+int screenToGridY(float sy) {
+
+return floor((sy - offsetY) / getCellSize());
+
+}
+
+void pan(float dx, float dy) {
+
+offsetX += dx;
+
+offsetY += dy;
+
+}
+
+void zoomAt(float screenX, float screenY, float factor) {
+
+int gx = screenToGridX(screenX);
+
+int gy = screenToGridY(screenY);
+
+zoom *= factor;
+
+zoom = constrain(zoom, 0.1, 20.0);
+
+offsetX = screenX - gx * getCellSize();
+
+offsetY = screenY - gy * getCellSize();
+
+}
+
+void resetView() {
+
+zoom = 1.0;
+
+offsetX = 0;
+
+offsetY = 0;
+
+}
+
+void centerOnGrid(int gridWidth, int gridHeight) {
+
+offsetX = width * 0.5 - gridWidth * getCellSize() * 0.5;
+
+offsetY = height * 0.5 - gridHeight * getCellSize() * 0.5;
+
+}
+
+float getOffsetX() {
+
+return offsetX;
+
+}
+
+float getOffsetY() {
+
+return offsetY;
+
+}
+
+float getZoom() {
+
+return zoom;
+
+}
+
+void setBaseCellSize(int size) {
+
+baseCellSize = max(1, size);
+
+}
+
+int getBaseCellSize() {
+
+return baseCellSize;
+
+}
+
+}
