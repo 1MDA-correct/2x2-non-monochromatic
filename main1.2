@@ -1,0 +1,139 @@
+Grid grid;
+
+ConstraintEngine engine;
+
+Camera camera;
+
+Renderer renderer;
+
+int gridWidth = 200;
+
+int gridHeight = 150;
+
+int cellSize = 6;
+
+float whiteProbability = 0.7;
+
+void setup() {
+
+size(1200, 900);
+
+surface.setTitle("Prospecting Studio v2");
+
+grid = new Grid(gridWidth, gridHeight);
+
+engine = new ConstraintEngine(grid);
+
+camera = new Camera(cellSize);
+
+camera.centerOnGrid(gridWidth, gridHeight);
+
+renderer = new Renderer(grid, camera);
+
+engine.generate(whiteProbability);
+
+println("Board valid: " + engine.validateBoard());
+
+}
+
+void draw() {
+
+background(200);
+
+renderer.drawGrid();
+
+renderer.drawGridLines();
+
+int gx = renderer.screenToGridX(mouseX);
+
+int gy = renderer.screenToGridY(mouseY);
+
+if (mouseButton == RIGHT) {
+
+renderer.drawCursor(gx, gy, Grid.WHITE);
+
+} else {
+
+renderer.drawCursor(gx, gy, Grid.BLACK);
+
+}
+
+renderer.drawOverlay(
+
+"LMB: Draw | RMB: Erase | R: Regenerate | V: Validate | +/-: Zoom"
+
+);
+
+}
+
+void mousePressed() {
+
+handlePaint();
+
+}
+
+void mouseDragged() {
+
+handlePaint();
+
+}
+
+void handlePaint() {
+
+int gx = renderer.screenToGridX(mouseX);
+
+int gy = renderer.screenToGridY(mouseY);
+
+if (mouseButton == LEFT) {
+
+engine.setPixel(gx, gy, Grid.BLACK);
+
+}
+
+else if (mouseButton == RIGHT) {
+
+engine.erasePixel(gx, gy, whiteProbability);
+
+}
+
+}
+
+void keyPressed() {
+
+if (key == 'r' || key == 'R') {
+
+engine.generate(whiteProbability);
+
+println("Regenerated. Valid: " + engine.validateBoard());
+
+}
+
+if (key == 'v' || key == 'V') {
+
+println("Board valid: " + engine.validateBoard());
+
+}
+
+if (key == '+' || key == '=') {
+
+camera.zoomAt(width * 0.5, height * 0.5, 1.1);
+
+}
+
+if (key == '-') {
+
+camera.zoomAt(width * 0.5, height * 0.5, 1.0 / 1.1);
+
+}
+
+if (key == '0') {
+
+camera.resetView();
+
+camera.centerOnGrid(gridWidth, gridHeight);
+
+}
+
+}
+
+
