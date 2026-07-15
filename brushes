@@ -1,0 +1,403 @@
+abstract class Brush {
+
+ConstraintEngine engine;
+
+int size;
+
+Brush(ConstraintEngine engine, int size) {
+
+this.engine = engine;
+
+this.size = max(1, size);
+
+}
+
+abstract void apply(int gx, int gy, byte color);
+
+void erase(int gx, int gy, float whiteProbability) {
+
+applyErase(gx, gy, whiteProbability);
+
+}
+
+abstract void applyErase(int gx, int gy, float whiteProbability);
+
+void setSize(int s) {
+
+size = max(1, s);
+
+}
+
+int getSize() {
+
+return size;
+
+}
+
+}
+
+//==================================================
+
+// SQUARE BRUSH
+
+//==================================================
+
+class SquareBrush extends Brush {
+
+SquareBrush(ConstraintEngine engine, int size) {
+
+super(engine, size);
+
+}
+
+void apply(int gx, int gy, byte color) {
+
+int half = size / 2;
+
+for (int y = gy - half; y <= gy + half; y++) {
+
+for (int x = gx - half; x <= gx + half; x++) {
+
+engine.setPixel(x, y, color);
+
+}
+
+}
+
+}
+
+void applyErase(int gx, int gy, float whiteProbability) {
+
+int half = size / 2;
+
+for (int y = gy - half; y <= gy + half; y++) {
+
+for (int x = gx - half; x <= gx + half; x++) {
+
+engine.erasePixel(x, y, whiteProbability);
+
+}
+
+}
+
+}
+
+}
+
+//==================================================
+
+// CIRCLE BRUSH
+
+//==================================================
+
+class CircleBrush extends Brush {
+
+CircleBrush(ConstraintEngine engine, int size) {
+
+super(engine, size);
+
+}
+
+void apply(int gx, int gy, byte color) {
+
+int r = size / 2;
+
+int r2 = r * r;
+
+for (int y = gy - r; y <= gy + r; y++) {
+
+for (int x = gx - r; x <= gx + r; x++) {
+
+int dx = x - gx;
+
+int dy = y - gy;
+
+if (dx * dx + dy * dy <= r2) {
+
+engine.setPixel(x, y, color);
+
+}
+
+}
+
+}
+
+}
+
+void applyErase(int gx, int gy, float whiteProbability) {
+
+int r = size / 2;
+
+int r2 = r * r;
+
+for (int y = gy - r; y <= gy + r; y++) {
+
+for (int x = gx - r; x <= gx + r; x++) {
+
+int dx = x - gx;
+
+int dy = y - gy;
+
+if (dx * dx + dy * dy <= r2) {
+
+engine.erasePixel(x, y, whiteProbability);
+
+}
+
+}
+
+}
+
+}
+
+}
+
+//==================================================
+
+// LINE BRUSH
+
+//==================================================
+
+class LineBrush extends Brush {
+
+int lastX = -1;
+
+int lastY = -1;
+
+LineBrush(ConstraintEngine engine, int size) {
+
+super(engine, size);
+
+}
+
+void begin(int gx, int gy) {
+
+lastX = gx;
+
+lastY = gy;
+
+}
+
+void end() {
+
+lastX = -1;
+
+lastY = -1;
+
+}
+
+void apply(int gx, int gy, byte color) {
+
+if (lastX == -1) {
+
+lastX = gx;
+
+lastY = gy;
+
+}
+
+drawLine(lastX, lastY, gx, gy, color);
+
+lastX = gx;
+
+lastY = gy;
+
+}
+
+void applyErase(int gx, int gy, float whiteProbability) {
+
+if (lastX == -1) {
+
+lastX = gx;
+
+lastY = gy;
+
+}
+
+drawLineErase(lastX, lastY, gx, gy, whiteProbability);
+
+lastX = gx;
+
+lastY = gy;
+
+}
+
+void drawLine(int x0, int y0, int x1, int y1, byte color) {
+
+int dx = abs(x1 - x0);
+
+int dy = abs(y1 - y0);
+
+int sx = x0 < x1 ? 1 : -1;
+
+int sy = y0 < y1 ? 1 : -1;
+
+int err = dx - dy;
+
+CircleBrush circle = new CircleBrush(engine, size);
+
+while (true) {
+
+circle.apply(x0, y0, color);
+
+if (x0 == x1 && y0 == y1) break;
+
+int e2 = 2 * err;
+
+if (e2 > -dy) {
+
+err -= dy;
+
+x0 += sx;
+
+}
+
+if (e2 < dx) {
+
+err += dx;
+
+y0 += sy;
+
+}
+
+}
+
+}
+
+void drawLineErase(int x0, int y0, int x1, int y1, float whiteProbability) {
+
+int dx = abs(x1 - x0);
+
+int dy = abs(y1 - y0);
+
+int sx = x0 < x1 ? 1 : -1;
+
+int sy = y0 < y1 ? 1 : -1;
+
+int err = dx - dy;
+
+CircleBrush circle = new CircleBrush(engine, size);
+
+while (true) {
+
+circle.applyErase(x0, y0, whiteProbability);
+
+if (x0 == x1 && y0 == y1) break;
+
+int e2 = 2 * err;
+
+if (e2 > -dy) {
+
+err -= dy;
+
+x0 += sx;
+
+}
+
+if (e2 < dx) {
+
+err += dx;
+
+y0 += sy;
+
+}
+
+}
+
+}
+
+}
+
+//==================================================
+
+// FILL BRUSH
+
+//==================================================
+
+class FillBrush extends Brush {
+
+FillBrush(ConstraintEngine engine) {
+
+super(engine, 1);
+
+}
+
+void apply(int gx, int gy, byte color) {
+
+if (!engine.grid.contains(gx, gy)) return;
+
+byte target = engine.grid.getColor(gx, gy);
+
+if (target == color) return;
+
+ArrayList<PVector> q = new ArrayList<PVector>();
+
+q.add(new PVector(gx, gy));
+
+while (!q.isEmpty()) {
+
+PVector p = q.remove(q.size() - 1);
+
+int x = int(p.x);
+
+int y = int(p.y);
+
+if (!engine.grid.contains(x, y)) continue;
+
+if (engine.grid.getColor(x, y) != target) continue;
+
+engine.setPixel(x, y, color);
+
+q.add(new PVector(x + 1, y));
+
+q.add(new PVector(x - 1, y));
+
+q.add(new PVector(x, y + 1));
+
+q.add(new PVector(x, y - 1));
+
+}
+
+}
+
+void applyErase(int gx, int gy, float whiteProbability) {
+
+if (!engine.grid.contains(gx, gy)) return;
+
+byte target = engine.grid.getColor(gx, gy);
+
+byte replacement = engine.generatedValue(gx, gy, whiteProbability);
+
+ArrayList<PVector> q = new ArrayList<PVector>();
+
+q.add(new PVector(gx, gy));
+
+while (!q.isEmpty()) {
+
+PVector p = q.remove(q.size() - 1);
+
+int x = int(p.x);
+
+int y = int(p.y);
+
+if (!engine.grid.contains(x, y)) continue;
+
+if (engine.grid.getColor(x, y) != target) continue;
+
+engine.erasePixel(x, y, whiteProbability);
+
+q.add(new PVector(x + 1, y));
+
+q.add(new PVector(x - 1, y));
+
+q.add(new PVector(x, y + 1));
+
+q.add(new PVector(x, y - 1));
+
+}
+
+}
+
+}
+
+
